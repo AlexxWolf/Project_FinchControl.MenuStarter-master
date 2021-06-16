@@ -86,7 +86,7 @@ namespace Project_FinchControl
                         break;
 
                     case "c":
-
+                        DataRecordingScreen(finchRobot);
                         break;
 
                     case "d":
@@ -116,7 +116,7 @@ namespace Project_FinchControl
             } while (!quitApplication);
         }
 
-        #region TALENT SHOW
+        #region Talent Show
 
         /// <summary>
         /// *****************************************************************
@@ -356,6 +356,173 @@ namespace Project_FinchControl
 
         #endregion
 
+        #region DATA RECORDING 
+
+        static void DataRecordingScreen(Finch finchRobot)
+        {
+            int numberOfData = 0;
+            double freqOfData = 0;
+            double[] temperatures = null;
+
+            Console.CursorVisible = true;
+
+            bool quitMenu = false;
+            string menuChoice;
+
+            do
+            {
+                DisplayScreenHeader("Data Recording Menu");
+                //
+                // get user menu choice
+                //
+                Console.WriteLine("\ta) Number of Data Points");
+                Console.WriteLine("\tb) Frequency of Data Points");
+                Console.WriteLine("\tc) Get Data");
+                Console.WriteLine("\td) Show Data");
+                Console.WriteLine("\tq) Main Menu");
+                Console.Write("\t\tEnter Choice:");
+                menuChoice = Console.ReadLine().ToLower();
+
+                //
+                // process user menu choice
+                //
+                switch (menuChoice)
+                {
+                    case "a":
+                        numberOfData = DataPointsMenu(finchRobot);
+                        break;
+
+                    case "b":
+                        freqOfData = DataFrequencyMenu(finchRobot);
+                        break;
+
+                    case "c":
+                        temperatures = GetDataMenu(numberOfData, freqOfData, finchRobot);
+                        break;
+
+                    case "d":
+                        if(temperatures.Length == 0)
+                        {
+                            DisplayScreenHeader("\tOoops...");
+                            Console.WriteLine("There is no data to display...");
+                            DisplayContinuePrompt();
+                        }
+                        ShowDataMenu(temperatures);
+                        break;
+
+                    case "q":
+                        quitMenu = true;
+                        break;
+
+                    default:
+                        Console.WriteLine();
+                        Console.WriteLine("\tPlease enter a letter for the menu choice.");
+                        DisplayContinuePrompt();
+                        break;
+                }
+            } while (!quitMenu);
+
+
+        }
+
+        static void ShowDataMenu(double[] temperatures)
+        {
+            DisplayScreenHeader("Show Data");
+
+            //
+            //Display Header
+            //
+            Console.WriteLine(
+                "Recording #".PadLeft(24) +
+                "Temp".PadLeft(24)
+                );
+            Console.WriteLine(
+                "...........".PadLeft(24) +
+                "...........".PadLeft(24)
+                );
+
+            for (int i = 0; i < temperatures.Length; i++)
+            {
+                Console.WriteLine(
+                    (i + 1).ToString().PadLeft(24) +
+                    temperatures[i].ToString().PadLeft(24)
+                    );
+            }
+            DisplayContinuePrompt();
+        }
+
+        static double[] GetDataMenu(int numberOfData, double freqOfData, Finch finchRobot)
+        {
+            double[] temperatures = new double[numberOfData];
+
+            DisplayScreenHeader("Get Data");
+
+            Console.WriteLine("Data Points: {0}", numberOfData);
+            Console.WriteLine("Frequency: {0}", freqOfData);
+            Console.WriteLine();
+            Console.WriteLine("We will now gather the temperature...");
+            DisplayContinuePrompt();
+
+            for(int index = 0; index < numberOfData; index++)
+            {
+                temperatures[index] = finchRobot.getTemperature();
+                Console.WriteLine($"\tReading {index}: {temperatures[index]}");
+                int waitInSeconds = (int)(freqOfData * 1000);
+                finchRobot.wait(waitInSeconds);
+            }
+            
+            DisplayContinuePrompt();
+            return temperatures;
+        }
+
+        static int DataPointsMenu(Finch finchRobot)
+        {
+            int numberOfData;
+
+            DisplayScreenHeader("\tData Points");
+            Console.WriteLine("\tEnter number of data points:");
+            
+            //Validate User Input using nested do while.
+            int.TryParse(Console.ReadLine(), out numberOfData);
+            if (numberOfData <= 0)
+            {
+                do
+                {
+                    Console.WriteLine("Please enter a valid integer...");
+                    int.TryParse(Console.ReadLine(), out numberOfData);
+                } while (numberOfData <= 0);
+            }
+            Console.WriteLine("You entered: {0}", numberOfData);
+            DisplayContinuePrompt();
+            return numberOfData;
+        }
+
+        static double DataFrequencyMenu(Finch finchRobot)
+        {
+            double freqOfData;
+
+            DisplayScreenHeader("\tData Frequency");
+            Console.WriteLine("Enter frequency of data points:");
+            
+            
+            // Validate user input using nested do 
+            double.TryParse(Console.ReadLine(), out freqOfData);
+
+             if(freqOfData <= 0)
+             {
+                 do
+                 {
+                   Console.WriteLine("Please enter a valid numver...");
+                   double.TryParse(Console.ReadLine(), out freqOfData);
+                 } while (freqOfData <= 0);
+             } 
+            
+            Console.WriteLine("You entered: {0}", freqOfData);
+            DisplayContinuePrompt();
+            return freqOfData;
+        }
+        #endregion
+
         #region FINCH ROBOT MANAGEMENT
 
         /// <summary>
@@ -365,55 +532,55 @@ namespace Project_FinchControl
         /// </summary>
         /// <param name="finchRobot">finch robot object</param>
         static void DisplayDisconnectFinchRobot(Finch finchRobot)
-        {
-            Console.CursorVisible = false;
+            {
+                Console.CursorVisible = false;
 
-            DisplayScreenHeader("Disconnect Finch Robot");
+                DisplayScreenHeader("Disconnect Finch Robot");
 
-            Console.WriteLine("\tAbout to disconnect from the Finch robot.");
-            DisplayContinuePrompt();
+                Console.WriteLine("\tAbout to disconnect from the Finch robot.");
+                DisplayContinuePrompt();
 
-            finchRobot.disConnect();
+                finchRobot.disConnect();
 
-            Console.WriteLine("\tThe Finch robot is now disconnect.");
+                Console.WriteLine("\tThe Finch robot is now disconnect.");
 
-            DisplayMenuPrompt("Main Menu");
-        }
+                DisplayMenuPrompt("Main Menu");
+            }
 
-        /// <summary>
-        /// *****************************************************************
-        /// *                  Connect the Finch Robot                      *
-        /// *****************************************************************
-        /// </summary>
-        /// <param name="finchRobot">finch robot object</param>
-        /// <returns>notify if the robot is connected</returns>
-        static bool DisplayConnectFinchRobot(Finch finchRobot)
-        {
-            Console.CursorVisible = false;
+            /// <summary>
+            /// *****************************************************************
+            /// *                  Connect the Finch Robot                      *
+            /// *****************************************************************
+            /// </summary>
+            /// <param name="finchRobot">finch robot object</param>
+            /// <returns>notify if the robot is connected</returns>
+            static bool DisplayConnectFinchRobot(Finch finchRobot)
+            {
+                Console.CursorVisible = false;
 
-            bool robotConnected;
+                bool robotConnected;
 
-            DisplayScreenHeader("Connect Finch Robot");
+                DisplayScreenHeader("Connect Finch Robot");
 
-            Console.WriteLine("\tAbout to connect to Finch robot. Please be sure the USB cable is connected to the robot and computer now.");
-            DisplayContinuePrompt();
+                Console.WriteLine("\tAbout to connect to Finch robot. Please be sure the USB cable is connected to the robot and computer now.");
+                DisplayContinuePrompt();
 
-            robotConnected = finchRobot.connect();
+                robotConnected = finchRobot.connect();
 
-            // TODO test connection and provide user feedback - text, lights, sounds
+                // TODO test connection and provide user feedback - text, lights, sounds
 
-            DisplayMenuPrompt("Main Menu");
+                DisplayMenuPrompt("Main Menu");
 
-            //
-            // reset finch robot
-            //
-            finchRobot.setLED(0, 0, 0);
-            finchRobot.noteOff();
+                //
+                // reset finch robot
+                //
+                finchRobot.setLED(0, 0, 0);
+                finchRobot.noteOff();
 
-            return robotConnected;
-        }
+                return robotConnected;
+            }
 
-        #endregion
+            #endregion
 
         #region USER INTERFACE
 
